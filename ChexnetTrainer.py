@@ -19,6 +19,7 @@ from sklearn.metrics.ranking import roc_auc_score
 from DensenetModels import DenseNet121
 from DensenetModels import DenseNet169
 from DensenetModels import DenseNet201
+from ResnetModels import *
 from DatasetGenerator import DatasetGenerator
 
 
@@ -40,13 +41,15 @@ class ChexnetTrainer ():
     #---- launchTimestamp - date/time, used to assign unique name for the checkpoint file
     #---- checkpoint - if not None loads the model and continues training
     
-    def train (pathDirData, pathFileTrain, pathFileVal, nnArchitecture, nnIsTrained, nnClassCount, trBatchSize, trMaxEpoch, transResize, transCrop, launchTimestamp, checkpoint):
+    def train (self, pathDirData, pathFileTrain, pathFileVal, nnArchitecture, nnIsTrained, nnClassCount, trBatchSize, trMaxEpoch, transResize, transCrop, launchTimestamp, checkpoint):
 
         
         #-------------------- SETTINGS: NETWORK ARCHITECTURE
         if nnArchitecture == 'DENSE-NET-121': model = DenseNet121(nnClassCount, nnIsTrained).cuda()
         elif nnArchitecture == 'DENSE-NET-169': model = DenseNet169(nnClassCount, nnIsTrained).cuda()
         elif nnArchitecture == 'DENSE-NET-201': model = DenseNet201(nnClassCount, nnIsTrained).cuda()
+        elif nnArchitecture == 'ResNet-18': model = ResNet18(nnClassCount, nnIsTrained).cuda()
+        elif nnArchitecture == 'ResNet-50': model = ResNet50(nnClassCount, nnIsTrained).cuda()
         
         model = torch.nn.DataParallel(model).cuda()
                 
@@ -91,8 +94,8 @@ class ChexnetTrainer ():
             timestampDate = time.strftime("%d%m%Y")
             timestampSTART = timestampDate + '-' + timestampTime
                          
-            ChexnetTrainer.epochTrain (model, dataLoaderTrain, optimizer, scheduler, trMaxEpoch, nnClassCount, loss)
-            lossVal, losstensor = ChexnetTrainer.epochVal (model, dataLoaderVal, optimizer, scheduler, trMaxEpoch, nnClassCount, loss)
+            self.epochTrain (model, dataLoaderTrain, optimizer, scheduler, trMaxEpoch, nnClassCount, loss)
+            lossVal, losstensor = self.epochVal (model, dataLoaderVal, optimizer, scheduler, trMaxEpoch, nnClassCount, loss)
             
             timestampTime = time.strftime("%H%M%S")
             timestampDate = time.strftime("%d%m%Y")
@@ -106,10 +109,12 @@ class ChexnetTrainer ():
                 print ('Epoch [' + str(epochID + 1) + '] [save] [' + timestampEND + '] loss= ' + str(lossVal))
             else:
                 print ('Epoch [' + str(epochID + 1) + '] [----] [' + timestampEND + '] loss= ' + str(lossVal))
+            if epochID == trMaxEpoch-1:
+                torch.save({'epoch': epochID + 1, 'state_dict': model.state_dict(), 'best_loss': lossMIN, 'optimizer' : optimizer.state_dict()}, 'm-final-checkpoint'  + '.pth.tar')
                      
     #-------------------------------------------------------------------------------- 
        
-    def epochTrain (model, dataLoader, optimizer, scheduler, epochMax, classCount, loss):
+    def epochTrain (self, model, dataLoader, optimizer, scheduler, epochMax, classCount, loss):
         
         model.train()
         
@@ -129,7 +134,7 @@ class ChexnetTrainer ():
             
     #-------------------------------------------------------------------------------- 
         
-    def epochVal (model, dataLoader, optimizer, scheduler, epochMax, classCount, loss):
+    def epochVal (self, model, dataLoader, optimizer, scheduler, epochMax, classCount, loss):
         
         model.eval ()
         
@@ -164,7 +169,7 @@ class ChexnetTrainer ():
     #---- dataPRED - predicted data
     #---- classCount - number of classes
     
-    def computeAUROC (dataGT, dataPRED, classCount):
+    def computeAUROC (self, dataGT, dataPRED, classCount):
         
         outAUROC = []
         
@@ -193,7 +198,7 @@ class ChexnetTrainer ():
     #---- launchTimestamp - date/time, used to assign unique name for the checkpoint file
     #---- checkpoint - if not None loads the model and continues training
     
-    def test (pathDirData, pathFileTest, pathModel, nnArchitecture, nnClassCount, nnIsTrained, trBatchSize, transResize, transCrop, launchTimeStamp):   
+    def test (self, pathDirData, pathFileTest, pathModel, nnArchitecture, nnClassCount, nnIsTrained, trBatchSize, transResize, transCrop, launchTimeStamp):   
         
         
         CLASS_NAMES = [ 'Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia',
@@ -205,6 +210,8 @@ class ChexnetTrainer ():
         if nnArchitecture == 'DENSE-NET-121': model = DenseNet121(nnClassCount, nnIsTrained).cuda()
         elif nnArchitecture == 'DENSE-NET-169': model = DenseNet169(nnClassCount, nnIsTrained).cuda()
         elif nnArchitecture == 'DENSE-NET-201': model = DenseNet201(nnClassCount, nnIsTrained).cuda()
+        elif nnArchitecture == 'ResNet-18': model = ResNet18(nnClassCount, nnIsTrained).cuda()
+        elif nnArchitecture == 'ResNet-50': model = ResNet50(nnClassCount, nnIsTrained).cuda()
         
         model = torch.nn.DataParallel(model).cuda() 
         
@@ -244,7 +251,8 @@ class ChexnetTrainer ():
             
             outPRED = torch.cat((outPRED, outMean.data), 0)
 
-        aurocIndividual = ChexnetTrainer.computeAUROC(outGT, outPRED, nnClassCount)
+#        aurocIndividual = ChexnetTrainer.computeAUROC(outGT, outPRED, nnClassCount)
+        aurocIndividual = self.computeAUROC(outGT, outPRED, nnClassCount)
         aurocMean = np.array(aurocIndividual).mean()
         
         print ('AUROC mean ', aurocMean)

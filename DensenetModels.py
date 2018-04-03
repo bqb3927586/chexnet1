@@ -17,7 +17,7 @@ class DenseNet121(nn.Module):
 	
         super(DenseNet121, self).__init__()
 		
-        self.densenet121 = torchvision.models.densenet121(pretrained=isTrained)
+        self.densenet121 = torchvision.models.densenet121(pretrained=False)
 
         kernelCount = self.densenet121.classifier.in_features
 		
