@@ -18,7 +18,7 @@ implementation.
 ## Usage
 * Download the ChestX-ray14 database from [here](https://nihcc.app.box.com/v/ChestXray-NIHCC/folder/37178474737)
 * Unpack archives in separate directories (e.g. images_001.tar.gz into images_001)
-* Run **python Main.py** to run test using the pre-trained model (m-25012018-123527)
+* Run **python Main.py** to run test using the pre-trained model (DenseNet.pth.tar)
 * Use the **runTrain()** function in the **Main.py** to train a model from scratch
 
 This implementation allows to conduct experiments with 3 different densenet architectures: densenet-121, densenet-169 and
@@ -27,7 +27,7 @@ densenet-201.
 * To generate CAM of a test file run script HeatmapGenerator 
 
 ## Results
-The highest accuracy 0.8508 was achieved by the model m-25012018-123527 (see the models directory).
+The highest accuracy 0.8508 was achieved by the model DenseNet.pth.tar (see the models directory).
 
 | Pathology     | AUROC         |
 | ------------- |:-------------:|
